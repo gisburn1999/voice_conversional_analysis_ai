@@ -14,9 +14,7 @@ class DatabaseManager:
     def setup_db(self):
         conn = self.connect()
         cursor = conn.cursor()
-        cursor.execute(
-            """DROP TABLE IF EXISTS recordings"""
-        )
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS recordings (
                 recording_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,8 +28,6 @@ class DatabaseManager:
             );
         """)
         # ai_analysis table
-        cursor.execute(
-            """DROP TABLE IF EXISTS ai_analysis""")
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS ai_analysis (

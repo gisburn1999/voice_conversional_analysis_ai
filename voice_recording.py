@@ -102,7 +102,7 @@ class VoiceApp():
         self.filepath = os.path.splitext(wav_filepath)[0] + ".mp3"
         audio = AudioSegment.from_wav(wav_filepath)
         audio.export(self.filepath , format="mp3")
-        return self.filepath
+        #return self.filepath
 
 
     def _generate_filename(self):
@@ -124,8 +124,10 @@ class VoiceApp():
             self.transcript_text = None
 
 
-    def transcribe(self):
+    def transcribe(self, filepath=None):
         print(":: Transcribing...")
+        if filepath:
+            self.filepath = filepath
         print(self.filepath)
 
         if not self.filepath:
@@ -194,7 +196,7 @@ class VoiceApp():
 
     def analyse_groq(self):
         if self.transcript_text:
-            ai_app = Ai_Analyse(record_id=self.record_id)  # pass record_id here
+            ai_app = Ai_Analyse(record_id=self.record_id, content=self.transcript_text)
             analysis_text = ai_app.basic_groq_analysing()
         else:
             print("No transcript available. Please transcribe or load a file first.")

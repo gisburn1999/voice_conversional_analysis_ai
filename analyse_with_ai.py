@@ -111,9 +111,9 @@ class Ai_Analyse():
         print("Generated text:\n" , response.content[0].text)
 
 
-    def basic_groq_analysing(self, groq_model = "llama3-8b-8192", groq_heat = 1):
+    def basic_groq_analysing(self, groq_model = "llama3-8b-8192", groq_heat = 0.8):
         db = DatabaseManager() # Initialize the Groq client
-
+        print(self.content)
         # client = Groq(api_key= "KEY_GROQ")
         groq_api_key = os.getenv("GROQ_API_KEY")
         groq_client = Groq(api_key=groq_api_key)
@@ -161,8 +161,7 @@ class Ai_Analyse():
             analysis_type="relationship_analysis" ,
             model=groq_model ,
             temp=groq_heat ,
-            analysis_file=raw_text ,  # or save as a file path if needed
-            #analysis_path = file_path
+            analysis_file=raw_text
         )
 
         # Display the generated text
