@@ -1,0 +1,7 @@
+# Ignore all files in folder
+
+transcripts/*
+recordings/*
+voice/*
+test_acc_works.py/*
+audio_input_file_test.py/*
