@@ -13,7 +13,7 @@ def main_menue():
           "4. Name the speaker\n"
           "5. GROQ Test\n"
           "q for quit\n"
-          "\nAnd some interim solutions for testing purpose:\n"
+          "\nInterim Helper menue:\n"
           "i1. list all names in the conversation\n"
           "6. Load a transcript HARDCODED\n"
           "7. Analyse the speaker with GPT 4 MINI\n"
@@ -45,8 +45,6 @@ def main_menue():
                 app.print_recording()
             case "9":
                 #with open("transcripts/output_20250514_191055.txt" , "r" , encoding="utf-8") as f:
-
-
                 audio_filepath = "recordings/testfile_talking_with background.m4v"
                 #audio_filepath = "recordings/20250524_105941_recording.wav" # long recording with (BELLA)
                 #audio_filepath = "recordings/output_20250513_100409.wav"

@@ -29,6 +29,7 @@ class Ai_Analyse():
 
 
     def name_the_speaker_ai(self):
+        print(self.content)
         # Generate a response using the OpenAI API
         response = open_ai_client.chat.completions.create(
             model=self.model_open_ai,

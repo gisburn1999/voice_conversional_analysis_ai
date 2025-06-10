@@ -1,4 +1,6 @@
 import sqlite3
+import os
+
 
 class DatabaseManager:
     def __init__(self , db_path="recordings.db"):
@@ -14,6 +16,13 @@ class DatabaseManager:
     def setup_db(self):
         conn = self.connect()
         cursor = conn.cursor()
+        try:
+            cursor.execute("ALTER TABLE recordings ADD COLUMN length INT;")
+        except sqlite3.OperationalError:
+                # Column already exists
+
+            pass
+
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS recordings (
@@ -24,9 +33,13 @@ class DatabaseManager:
                 transcript_file TEXT,
                 analysis_file TEXT,
                 transcript TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                names TEXT,
+                length INT
             );
         """)
+
+
         # ai_analysis table
         cursor.execute(
             """
@@ -41,18 +54,79 @@ class DatabaseManager:
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (recording_id) REFERENCES recordings(recording_id)
             );
-        """
-            )
+        """)
+
+        #create speaker name Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS recording_names (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recording_id INTEGER,
+                name TEXT,
+                FOREIGN KEY (recording_id) REFERENCES recordings(recording_id)
+            );
+        """)
+
+        self.update_missing_lengths()
         conn.commit()
         conn.close()
         #print("SQL is set")
+
+
+
+
+    def update_missing_lengths(self):
+        print("Updating missing lengths...")
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        # Select rows where length is NULL
+        cursor.execute(
+            """
+            SELECT recording_id, transcript_file 
+            FROM recordings 
+            WHERE length IS NULL;
+        """
+            )
+        rows = cursor.fetchall()
+
+        for recording_id , transcript_file in rows:
+            if transcript_file:
+                # Prepend the folder path
+                transcript_path = os.path.join("transcripts" , transcript_file)
+
+                if os.path.exists(transcript_path):
+                    try:
+                        with open(transcript_path , "r" , encoding="utf-8") as f:
+                            content = f.read()
+                            length = len(content)  # character count
+                    except Exception as e:
+                        print(f"Error reading {transcript_path}: {e}")
+                        continue
+
+                    # Update the length in the database
+                    cursor.execute(
+                        """
+                        UPDATE recordings 
+                        SET length = ? 
+                        WHERE recording_id = ?;
+                    """ , (length , recording_id)
+                        )
+                    print(f"Updated recording_id {recording_id} with length {length}")
+                else:
+                    print(f"File not found for recording_id {recording_id}: {transcript_path}")
+            else:
+                print(f"No transcript_file entry for recording_id {recording_id}")
+
+        conn.commit()
+        conn.close()
+
 
     def save_recording(self, timestamp, folder, sound_file, transcript_file=None, analysis_file=None, transcript=None):
         conn = self.connect()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO recordings (timestamp, folder, sound_file, transcript_file, analysis_file, transcript)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO recordings (timestamp, folder, sound_file, transcript_file, analysis_file, transcript, length INT)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (timestamp, folder, sound_file, transcript_file, analysis_file, transcript))
         conn.commit()
         record_id = cursor.lastrowid

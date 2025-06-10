@@ -91,18 +91,19 @@ class VoiceApp():
         write(wav_temp , self.fs , audio_data)
 
         # Convert to MP3 and delete WAV
-        self.filepath = self.convert_to_mp3(wav_temp)
+        self.convert_to_mp3(wav_temp)
         os.remove(wav_temp)
-
-        print(f":white_check_mark: Saved as {os.path.basename(self.filepath)} in {folder}")
-        #return self.filepath
+        if self.filepath:
+            print(f":white_check_mark: Saved as {os.path.basename(self.filepath)} in {folder}")
+        else:
+            print("No file saved")
 
 
     def convert_to_mp3(self , wav_filepath):
         self.filepath = os.path.splitext(wav_filepath)[0] + ".mp3"
         audio = AudioSegment.from_wav(wav_filepath)
         audio.export(self.filepath , format="mp3")
-        #return self.filepath
+
 
 
     def _generate_filename(self):
@@ -158,16 +159,21 @@ class VoiceApp():
         with open(txt_filepath , "w" , encoding="utf-8") as f:
             f.write(self.transcript_text)
 
+        textlength = len(txt_filepath)
+
         # save  to DB
         self.record_id = self.db.save_recording(
             timestamp=self.timestamp ,
             folder="recordings" ,
             sound_file=self.filename ,
             transcript_file=txt_filename ,
-            transcript=self.transcript_text
+            transcript=self.transcript_text,
+            length=textlength
         )
 
         return txt_filepath
+
+
 
 
     def print_recording(self):
