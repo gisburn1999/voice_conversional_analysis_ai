@@ -159,7 +159,7 @@ class VoiceApp():
         with open(txt_filepath , "w" , encoding="utf-8") as f:
             f.write(self.transcript_text)
 
-        textlength = len(txt_filepath)
+        length = len(txt_filepath)
 
         # save  to DB
         self.record_id = self.db.save_recording(
@@ -168,7 +168,7 @@ class VoiceApp():
             sound_file=self.filename ,
             transcript_file=txt_filename ,
             transcript=self.transcript_text,
-            length=textlength
+            length=length
         )
 
         return txt_filepath
@@ -196,6 +196,14 @@ class VoiceApp():
         if self.transcript_text:
             ai_app = Ai_Analyse(self.transcript_text)
             analysis_text = ai_app.problem_analysis()
+        else:
+            print("No transcript available. Please transcribe or load a file first.")
+
+
+    def analysis_global_first_try(self):
+        if self.transcript_text:
+            ai_app = Ai_Analyse(self.transcript_text)
+            analysis_text = ai_app.analysis_global_first_try()
         else:
             print("No transcript available. Please transcribe or load a file first.")
 

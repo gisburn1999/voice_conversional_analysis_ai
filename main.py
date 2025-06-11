@@ -9,8 +9,8 @@ def main_menue():
           "here are some opportunity's:\n"
           "\n1. Record a sound file and transcribe\n"
           "#2. --- no key --- Analyse the talk (claude)\n"
-          "#3. Do a 3 line recap of the talk\n"
-          "4. Name the speaker\n"
+          "3. analysis_global_first_try\n"
+          "4. Name the speaker GPT mini\n"
           "5. GROQ Test\n"
           "q for quit\n"
           "\nInterim Helper menue:\n"
@@ -29,7 +29,7 @@ def main_menue():
             case "2":
                 app.analys_claude()
             case "3":
-                pass
+                app.analysis_global_first_try()
             case "4": #name the speaker
                 app.name_the_speaker()
             case "5":
@@ -37,7 +37,9 @@ def main_menue():
             case "i1":
                 pass
             case "6":
-                filepath = "transcripts_prefabricated/before_midnight_generic_version.txt"
+                #filepath = "transcripts/dummy_script_30_min.txt"
+                #filepath = "transcripts/couple_Dummy_dialogue_pierre_lena.txt"
+                filepath = "transcripts_prefabricated/Export text - 20250524105941recording.wav (25_05_2025).txt"
                 app.open_existing_file(filepath)
             case "7": #Analyse the speaker with GPT 4 MINI
                 app.analysis_openAI()
@@ -45,9 +47,10 @@ def main_menue():
                 app.print_recording()
             case "9":
                 #with open("transcripts/output_20250514_191055.txt" , "r" , encoding="utf-8") as f:
-                audio_filepath = "recordings/testfile_talking_with background.m4v"
+                #audio_filepath = "recordings/testfile_talking_with background.m4v"
                 #audio_filepath = "recordings/20250524_105941_recording.wav" # long recording with (BELLA)
                 #audio_filepath = "recordings/output_20250513_100409.wav"
+                audio_filepath = "recordings/triangle_of_sadness_dinner_date_scene.mp3"
                 print(
                     f"We will load: {audio_filepath}\n"
                     "a hardcoded SOUNDFILE as samplefile\n"

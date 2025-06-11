@@ -74,6 +74,7 @@ class DatabaseManager:
 
 
 
+
     def update_missing_lengths(self):
         print("Updating missing lengths...")
         conn = self.connect()
@@ -121,13 +122,13 @@ class DatabaseManager:
         conn.close()
 
 
-    def save_recording(self, timestamp, folder, sound_file, transcript_file=None, analysis_file=None, transcript=None):
+    def save_recording(self, timestamp, folder, sound_file, transcript_file=None, analysis_file=None, transcript=None, length=None):
         conn = self.connect()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO recordings (timestamp, folder, sound_file, transcript_file, analysis_file, transcript, length INT)
+            INSERT INTO recordings (timestamp, folder, sound_file, transcript_file, analysis_file, transcript, length)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (timestamp, folder, sound_file, transcript_file, analysis_file, transcript))
+        """, (timestamp, folder, sound_file, transcript_file, analysis_file, transcript, length))
         conn.commit()
         record_id = cursor.lastrowid
         conn.close()

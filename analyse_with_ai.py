@@ -20,17 +20,16 @@ claude_client = anthropic.Anthropic(api_key=os.getenv("CLAUDE_KEY"))
 
 
 class Ai_Analyse():
-    def __init__(self, record_id=None, content=None):
+    def __init__(self, transcript_text, record_id=None, content=None, ):
         self.content = content
         self.model_open_ai = "gpt-4o-mini"
         self.record_id = record_id
+        self.content = transcript_text
 
 
 
 
     def name_the_speaker_ai(self):
-        print(self.content)
-        # Generate a response using the OpenAI API
         response = open_ai_client.chat.completions.create(
             model=self.model_open_ai,
             messages=[
@@ -42,7 +41,7 @@ class Ai_Analyse():
                     "role":    "user" ,
                     "content": (
                         "Below is a transcript. Please return a list of speakers, assigning real names when mentioned in the dialogue. "
-                        "For example: Speaker C (Carl, maybe Cole), Speaker B, Speaker A. "
+                        "For example: Speaker C (NAME A, maybe or can be also NAME A1), Speaker B, Speaker A. "
                         "Do not invent names — only use what’s actually spoken."
                     )
                 } ,
@@ -60,6 +59,41 @@ class Ai_Analyse():
         wrapped_text = textwrap.fill(text , width=80)
         print("result done with GPT40 mini")
         print(wrapped_text)
+
+
+    def analysis_global_first_try(self):
+        response = open_ai_client.chat.completions.create(
+        model = self.model_open_ai ,
+        messages = [
+            {"role":    "system" ,
+             "content": "You are an AI trained to analyze couple dialogues from natural conversations."} ,
+            {"role": "user" , "content": (
+                "Here is a conversation transcript between two people. "
+                "Please analyze and output in this exact format, replacing Speaker A and Speaker B with actual names if mentioned in the transcript. "
+                "If no names are found, use Speaker A and Speaker B.\n\n"
+                "Speaker A Problems (or [Name]):\n"
+                "- List the main emotional or communication problems this person shows.\n\n"
+                "Speaker B Problems (or [Name]):\n"
+                "- List the main emotional or communication problems this person shows.\n\n"
+                "Shared Problems:\n"
+                "- List problems that affect both or their relationship.\n\n"
+                "Conclusions & Explanation:\n"
+                "- Summarize what is happening beneath the surface and what could help resolve their conflict.\n\n"
+                "Please keep your answer concise but detailed enough for understanding.\n\n"
+                "Transcript:\n"
+            )} ,
+            {"role": "user" , "content": self.content} ,
+        ] ,
+        temperature = 0.7 ,
+        max_tokens = 400 ,
+        )
+
+        text = response.choices[0].message.content
+        print(text)
+        wrapped_text = textwrap.fill(text , width=80)
+        print("result done with GPT40 mini")
+        print(wrapped_text)
+
 
     def speaker_analysis(self):
         # Generate a response using the OpenAI API
@@ -170,3 +204,23 @@ class Ai_Analyse():
         wrapped_text = textwrap.fill(raw_text , width=80)
 
         print("Generated text:\n" , wrapped_text)
+
+
+    def test_open_file():
+        app = Ai_Analyse()
+        app.open_existing_file("transcripts/20250605_211200_recording.txt")
+        if app.content:
+            print("Loaded content:")
+            print(app.content[:300])
+        else:
+            print("Failed to load content.")
+
+
+
+"""
+# for debug
+
+if __name__ == "__main__":
+    app = DatabaseManager()
+    app.open_existing_file("transcripts_prefabricated/before_midnight_generic_version.txt")
+    print(app.content[:300])"""
