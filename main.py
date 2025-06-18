@@ -1,6 +1,7 @@
 
 from voice_recording import VoiceApp
-
+from save_data import DatabaseManager
+save = DatabaseManager()
 app = VoiceApp()
 
 
@@ -26,8 +27,9 @@ def main_menue():
             case "1":
                 app.record()
                 app.transcribe()
+
             case "2":
-                app.analys_claude()
+                app.analys_claude() # no key dead function
             case "3":
                 app.analysis_global_first_try()
             case "4": #name the speaker
@@ -37,10 +39,12 @@ def main_menue():
             case "i1":
                 pass
             case "6":
-                #filepath = "transcripts/dummy_script_30_min.txt"
+                filepath = "transcripts/dummy_script_30_min.txt"
                 #filepath = "transcripts/couple_Dummy_dialogue_pierre_lena.txt"
-                filepath = "transcripts_prefabricated/Export text - 20250524105941recording.wav (25_05_2025).txt"
+                #filepath = "transcripts_prefabricated/Export text - 20250524105941recording.wav (25_05_2025).txt"
+                save.get_or_insert_recording(filepath)
                 app.open_existing_file(filepath)
+
             case "7": #Analyse the speaker with GPT 4 MINI
                 app.analysis_openAI()
             case "8": # print
@@ -48,9 +52,9 @@ def main_menue():
             case "9":
                 #with open("transcripts/output_20250514_191055.txt" , "r" , encoding="utf-8") as f:
                 #audio_filepath = "recordings/testfile_talking_with background.m4v"
-                #audio_filepath = "recordings/20250524_105941_recording.wav" # long recording with (BELLA)
+                #audio_filepath = "recordings/20250524_105941_recording.m4v" # long recording with (BELLA)
                 #audio_filepath = "recordings/output_20250513_100409.wav"
-                audio_filepath = "recordings/triangle_of_sadness_dinner_date_scene.mp3"
+                #audio_filepath = "recordings/triangle_of_sadness_dinner_date_scene.mp3"
                 print(
                     f"We will load: {audio_filepath}\n"
                     "a hardcoded SOUNDFILE as samplefile\n"
@@ -62,7 +66,7 @@ def main_menue():
                 main_menue()
 
             case "q" | "Q":
-                print(f"See you the next time")
+                print(f"Always happy to help")
                 exit()
 
 

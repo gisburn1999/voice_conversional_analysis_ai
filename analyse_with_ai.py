@@ -20,11 +20,11 @@ claude_client = anthropic.Anthropic(api_key=os.getenv("CLAUDE_KEY"))
 
 
 class Ai_Analyse():
-    def __init__(self, transcript_text, record_id=None, content=None, ):
+    def __init__(self, record_id=None, content=None):
         self.content = content
         self.model_open_ai = "gpt-4o-mini"
         self.record_id = record_id
-        self.content = transcript_text
+        self.transcript_text=None
 
 
 
@@ -61,7 +61,9 @@ class Ai_Analyse():
         print(wrapped_text)
 
 
-    def analysis_global_first_try(self):
+    def analysis_global_first_try(self, temp = 0.8):
+        print(self.content)
+        db = DatabaseManager()
         response = open_ai_client.chat.completions.create(
         model = self.model_open_ai ,
         messages = [
@@ -84,15 +86,28 @@ class Ai_Analyse():
             )} ,
             {"role": "user" , "content": self.content} ,
         ] ,
-        temperature = 0.7 ,
-        max_tokens = 400 ,
+        temperature = temp ,
+        max_tokens = 200 ,
         )
-
+        tokens_used = response.usage.completion_tokens
+        print(f"tokens_used for this operation {tokens_used}")
         text = response.choices[0].message.content
         print(text)
         wrapped_text = textwrap.fill(text , width=80)
-        print("result done with GPT40 mini")
+        print(f"result done with {self.model_open_ai}")
         print(wrapped_text)
+
+        raw_text = response.choices[0].message.content
+        # save in sql
+        db.save_analysis(
+            recording_id=self.record_id ,
+            analysis_type="global_analysis" ,
+            model=self.model_open_ai ,
+            temp=temp ,
+            analysis_file=raw_text ,
+            token=tokens_used
+
+        )
 
 
     def speaker_analysis(self):
@@ -147,6 +162,7 @@ class Ai_Analyse():
 
 
     def basic_groq_analysing(self, groq_model = "llama3-8b-8192", groq_heat = 0.8):
+        print(f"in GROQ alalyse with ai: ID IS:\n {self.record_id}")
         db = DatabaseManager() # Initialize the Groq client
         print(self.content)
         # client = Groq(api_key= "KEY_GROQ")
@@ -165,7 +181,7 @@ class Ai_Analyse():
 
 
         # System's task
-        system_prompt = ("You act like an well know, experienced psychologist. Your highly skilled in identifying problems in couple relationships. And gives tips to solve them."
+        system_prompt = ("You act like an well known, experienced psychologist. Your highly skilled in identifying problems in couple relationships. And gives tips to solve them."
                           "best is, your able to nail you answers down. Problem and solution are not longer than one sentence!"
 
                          )
@@ -190,13 +206,15 @@ class Ai_Analyse():
             max_tokens=200  # Limits the length of the output
         )
         raw_text = response.choices[0].message.content
+        tokens_used = response.usage.completion_tokens
         # save in sql
         db.save_analysis(
             recording_id=self.record_id,
             analysis_type="relationship_analysis" ,
             model=groq_model ,
             temp=groq_heat ,
-            analysis_file=raw_text
+            analysis_file=raw_text ,
+            token=tokens_used
         )
 
         # Display the generated text
@@ -206,7 +224,7 @@ class Ai_Analyse():
         print("Generated text:\n" , wrapped_text)
 
 
-    def test_open_file():
+    def test_open_file(): # test function
         app = Ai_Analyse()
         app.open_existing_file("transcripts/20250605_211200_recording.txt")
         if app.content:
@@ -215,12 +233,3 @@ class Ai_Analyse():
         else:
             print("Failed to load content.")
 
-
-
-"""
-# for debug
-
-if __name__ == "__main__":
-    app = DatabaseManager()
-    app.open_existing_file("transcripts_prefabricated/before_midnight_generic_version.txt")
-    print(app.content[:300])"""

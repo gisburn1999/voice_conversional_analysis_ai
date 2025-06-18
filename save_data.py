@@ -72,11 +72,52 @@ class DatabaseManager:
         #print("SQL is set")
 
 
+    def get_or_insert_recording(self , filepath):
+        filename = os.path.basename(filepath)
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        # Check if recording already exists
+        record = self.get_db_recording(cursor , filename)
+
+        if not record:
+            # Read transcript from file
+            with open(filepath , 'r' , encoding='utf-8') as file:
+                content = file.read()
+            length = len(content)
+
+            # Insert into database
+            cursor.execute(
+                "INSERT INTO recordings (transcript_file, transcript, length) VALUES (?, ?, ?)" ,
+                (filename , content , length)
+            )
+            conn.commit()
+            record = self.get_db_recording(cursor , filename)
+
+        conn.close()
+
+        # Pull the ID and transcript from the record
+        if isinstance(record , tuple):
+            recording_id = record[0]
+            transcript_text = record[2]
+        elif isinstance(record , dict) or hasattr(record , "__getitem__"):
+            recording_id = record["recording_id"]
+            transcript_text = record["transcript"]
+        else:
+            recording_id = None
+            transcript_text = None
+
+        return recording_id , transcript_text
+
+
+    def get_db_recording(self, cursor, filename):
+        cursor.execute("SELECT recording_id FROM recordings WHERE transcript_file = ?" , (filename,))
+        return cursor.fetchone()
 
 
 
     def update_missing_lengths(self):
-        print("Updating missing lengths...")
+        #print("Updating missing lengths...")
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -146,14 +187,14 @@ class DatabaseManager:
         conn.close()
 
 
-    def save_analysis(self , recording_id , analysis_type , model , temp , analysis_file):
+    def save_analysis(self , recording_id , analysis_type , model , temp , analysis_file, token):
         conn = self.connect()
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO ai_analysis (recording_id, analysis_type, model, temp, analysis_file)
-            VALUES (?, ?, ?, ?, ?)
-        """ , (recording_id , analysis_type , model , temp , analysis_file)
+            INSERT INTO ai_analysis (recording_id, analysis_type, model, temp, analysis_file, tokens_used)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """ , (recording_id , analysis_type , model , temp , analysis_file, token)
             )
         conn.commit()
         conn.close()

@@ -7,10 +7,8 @@ import os
 import numpy as np
 from save_data import DatabaseManager
 import assemblyai as aai
+from pathlib import Path
 
-"""timeout = httpx.Timeout(120.0)  # 2 minutes
-client = httpx.Client(timeout=timeout)
-aai.settings.http_client = client"""
 
 from analyse_with_ai import Ai_Analyse
 
@@ -103,6 +101,7 @@ class VoiceApp():
         self.filepath = os.path.splitext(wav_filepath)[0] + ".mp3"
         audio = AudioSegment.from_wav(wav_filepath)
         audio.export(self.filepath , format="mp3")
+        self.filename = os.path.basename(self.filepath)
 
 
 
@@ -174,12 +173,12 @@ class VoiceApp():
         return txt_filepath
 
 
-
-
     def print_recording(self):
-        if self.transcript_text == None:
+        print(f"record ID is:{self.record_id}")
+        if self.transcript_text is None:
             print("Nothing to show, do a recording first")
         else:
+
             wrapped_text = textwrap.fill(self.transcript_text , width=80)
             print(f"Here is the full transcript of the last recording:\n{wrapped_text}")
 
@@ -201,14 +200,17 @@ class VoiceApp():
 
 
     def analysis_global_first_try(self):
+        print(f"IN analysis_global_first_try {self.record_id}")
         if self.transcript_text:
-            ai_app = Ai_Analyse(self.transcript_text)
-            analysis_text = ai_app.analysis_global_first_try()
+            ai_app = Ai_Analyse(self.transcript_text, self.record_id)
+            ai_app.analysis_global_first_try()
         else:
             print("No transcript available. Please transcribe or load a file first.")
 
 
     def analyse_groq(self):
+        print(f"in GROQ Voice recording: ID IS: {self.record_id}")
+        print(f"just checking: {self.transcript_text}")
         if self.transcript_text:
             ai_app = Ai_Analyse(record_id=self.record_id, content=self.transcript_text)
             analysis_text = ai_app.basic_groq_analysing()
@@ -240,5 +242,8 @@ class VoiceApp():
         else:
             print("No transcript available. Please record or load a file first.")
         pass
+
+
+
 
 
