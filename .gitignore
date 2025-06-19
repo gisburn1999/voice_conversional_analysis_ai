@@ -6,3 +6,4 @@ voice/*
 test_acc_works.py/*
 audio_input_file_test.py/*
 voice_reording_basic.py/*.env
+.env
