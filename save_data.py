@@ -23,7 +23,7 @@ class DatabaseManager:
 
             pass
 
-
+        # recordings table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS recordings (
                 recording_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,10 +66,8 @@ class DatabaseManager:
             );
         """)
 
-        self.update_missing_lengths()
-        conn.commit()
-        conn.close()
-        #print("SQL is set")
+
+
 
 
     def get_or_insert_recording(self , filepath):
@@ -97,7 +95,7 @@ class DatabaseManager:
         conn.close()
 
         # Pull the ID and transcript from the record
-        if isinstance(record , tuple):
+        if isinstance(record , tuple) and len(record) >= 3:
             recording_id = record[0]
             transcript_text = record[2]
         elif isinstance(record , dict) or hasattr(record , "__getitem__"):
@@ -110,14 +108,16 @@ class DatabaseManager:
         return recording_id , transcript_text
 
 
-    def get_db_recording(self, cursor, filename):
-        cursor.execute("SELECT recording_id FROM recordings WHERE transcript_file = ?" , (filename,))
+    def get_db_recording(self , cursor , filename):
+        cursor.execute(
+            "SELECT recording_id, transcript_file, transcript, length FROM recordings WHERE transcript_file = ?" ,
+            (filename ,)
+        )
         return cursor.fetchone()
 
 
-
     def update_missing_lengths(self):
-        #print("Updating missing lengths...")
+        #helper function to update the DB - obsolete
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -198,4 +198,3 @@ class DatabaseManager:
             )
         conn.commit()
         conn.close()
-

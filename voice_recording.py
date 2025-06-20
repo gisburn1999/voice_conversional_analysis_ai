@@ -7,10 +7,7 @@ import os
 import numpy as np
 from save_data import DatabaseManager
 import assemblyai as aai
-from pathlib import Path
 
-
-from analyse_with_ai import Ai_Analyse
 
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 
@@ -104,24 +101,9 @@ class VoiceApp():
         self.filename = os.path.basename(self.filepath)
 
 
-
     def _generate_filename(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"{timestamp}_recording.wav"
-
-
-    def open_existing_file(self, filepath):
-        self.filepath = filepath
-        try:
-            with open(self.filepath , "r" , encoding="utf-8") as f:
-                self.transcript_text = f.read()
-            print("Transcript loaded successfully.")
-        except FileNotFoundError:
-            print(f"File not found: {self.filepath}")
-            self.transcript_text = None
-        except Exception as e:
-            print(f"Error loading file: {e}")
-            self.transcript_text = None
 
 
     def transcribe(self, filepath=None):
@@ -169,9 +151,18 @@ class VoiceApp():
             transcript=self.transcript_text,
             length=length
         )
-
         return txt_filepath
 
+    def load_existing_recording(self , filepath):
+        self.filepath = filepath
+        record_id , transcript_text = self.db.get_or_insert_recording(filepath)
+        self.record_id = record_id
+        self.transcript_text = transcript_text
+
+        if self.record_id and self.transcript_text:
+            print("Recording loaded from database.")
+        else:
+            print("Could not load recording.")
 
     def print_recording(self):
         print(f"record ID is:{self.record_id}")
@@ -181,67 +172,6 @@ class VoiceApp():
 
             wrapped_text = textwrap.fill(self.transcript_text , width=80)
             print(f"Here is the full transcript of the last recording:\n{wrapped_text}")
-
-
-    def analysis_openAI(self):
-        if self.transcript_text:
-            ai_app = Ai_Analyse(self.transcript_text)
-            analysis_text = ai_app.speaker_analysis()
-        else:
-            print("No transcript available. Please transcribe or load a file first.")
-
-
-    def analys_claude(self):
-        if self.transcript_text:
-            ai_app = Ai_Analyse(self.transcript_text)
-            analysis_text = ai_app.problem_analysis()
-        else:
-            print("No transcript available. Please transcribe or load a file first.")
-
-
-    def analysis_global_first_try(self):
-        print(f"IN analysis_global_first_try {self.record_id}")
-        if self.transcript_text:
-            ai_app = Ai_Analyse(self.transcript_text, self.record_id)
-            ai_app.analysis_global_first_try()
-        else:
-            print("No transcript available. Please transcribe or load a file first.")
-
-
-    def analyse_groq(self):
-        print(f"in GROQ Voice recording: ID IS: {self.record_id}")
-        print(f"just checking: {self.transcript_text}")
-        if self.transcript_text:
-            ai_app = Ai_Analyse(record_id=self.record_id, content=self.transcript_text)
-            analysis_text = ai_app.basic_groq_analysing()
-        else:
-            print("No transcript available. Please transcribe or load a file first.")
-
-
-    def save_analysis(self):
-        # 2. Save result to file
-        os.makedirs("ai_results" , exist_ok=True)
-        analysis_filename = os.path.splitext(self.filename)[0] + "_speaker_analysis.txt"
-        analysis_filepath = os.path.join("ai_results" , analysis_filename)
-        with open(analysis_filepath , "w" , encoding="utf-8") as f:
-            f.write(analysis_text)
-
-        # 3. Save result metadata to DB
-        self.db.save_ai_analysis(
-            recording_id=self.record_id ,
-            analysis_type="speaker_analysis" ,
-            model=ai_app.model_open_ai ,
-            analysis_file=analysis_filename
-        )
-
-
-    def name_the_speaker(self):
-        if self.transcript_text:
-            ai_app = Ai_Analyse(self.transcript_text)
-            analysis_text = ai_app.name_the_speaker_ai()
-        else:
-            print("No transcript available. Please record or load a file first.")
-        pass
 
 
 

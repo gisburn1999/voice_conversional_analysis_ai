@@ -10,6 +10,7 @@ load_dotenv()
 import anthropic
 from groq import Groq
 from save_data import DatabaseManager
+import inspect
 
 open_ai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))   #here or as self?
 # Initialize the AI client
@@ -21,11 +22,14 @@ claude_client = anthropic.Anthropic(api_key=os.getenv("CLAUDE_KEY"))
 
 class Ai_Analyse():
     def __init__(self, record_id=None, content=None):
-        self.content = content
-        self.model_open_ai = "gpt-4o-mini"
         self.record_id = record_id
-        self.transcript_text=None
+        self.content = content
+        self.transcript_text = None
+        self.model_open_ai = "gpt-4o-mini"
 
+    def load_from_voice_app(self, voice_app):
+        self.record_id = voice_app.record_id
+        self.content = voice_app.transcript_text
 
 
 
@@ -60,9 +64,69 @@ class Ai_Analyse():
         print("result done with GPT40 mini")
         print(wrapped_text)
 
+    def analysis_global_master(self, temp = 0.8):
+        db = DatabaseManager()
+        response = open_ai_client.chat.completions.create(
+        model = self.model_open_ai ,
+            messages=[
+                {
+                    "role":    "system" ,
+                    "content": (
+                        "You are an AI trained to analyze couple dialogues from natural conversations. "
+                        "Your job is to detect emotional and communication patterns, extract names if available, and provide helpful relationship insights."
+                    )
+                } ,
+                {
+                    "role":    "user" ,
+                    "content": (
+                        "Here is a transcript of a conversation between two people. "
+                        "Please analyze it and return your answer in the following format:\n\n"
+
+                        "**Names:**\n"
+                        "- Speaker A: [Extracted name or 'Speaker A']\n"
+                        "- Speaker B: [Extracted name or 'Speaker B']\n\n"
+
+                        "**Speaker A Problems:**\n"
+                        "- List the main emotional or communication problems this person shows.\n\n"
+
+                        "**Speaker B Problems:**\n"
+                        "- List the main emotional or communication problems this person shows.\n\n"
+
+                        "**Shared Problems:**\n"
+                        "- List problems that affect both or their relationship.\n\n"
+
+                        "**Conclusions:**\n"
+                        "- Summarize what is happening beneath the surface.\n\n"
+
+                        "**Solutions:**\n"
+                        "- Suggest specific, actionable strategies to improve their communication or relationship.\n\n"
+
+                        "Please keep your answer concise but detailed enough for understanding.\n\n"
+                        "Transcript:\n"
+                    )
+                } ,
+                {"role": "user" , "content": self.content} ,
+            ] ,
+            temperature=temp ,
+            max_tokens=600 ,
+        )
+        text = response.choices[0].message.content
+        print(text)
+        tokens_used = response.usage.total_tokens
+        # save in sql
+        analysis_type = inspect.currentframe().f_code.co_name
+        db.save_analysis(
+            recording_id=self.record_id ,
+            analysis_type=analysis_type ,
+            model=self.model_open_ai ,
+            temp=temp ,
+            analysis_file=text ,
+            token=tokens_used
+
+        )
+
 
     def analysis_global_first_try(self, temp = 0.8):
-        print(self.content)
         db = DatabaseManager()
         response = open_ai_client.chat.completions.create(
         model = self.model_open_ai ,
@@ -87,24 +151,20 @@ class Ai_Analyse():
             {"role": "user" , "content": self.content} ,
         ] ,
         temperature = temp ,
-        max_tokens = 200 ,
+        max_tokens = 300 ,
         )
-        tokens_used = response.usage.completion_tokens
-        print(f"tokens_used for this operation {tokens_used}")
         text = response.choices[0].message.content
         print(text)
-        wrapped_text = textwrap.fill(text , width=80)
-        print(f"result done with {self.model_open_ai}")
-        print(wrapped_text)
+        tokens_used = response.usage.total_tokens
 
-        raw_text = response.choices[0].message.content
         # save in sql
+        analysis_type = inspect.currentframe().f_code.co_name
         db.save_analysis(
             recording_id=self.record_id ,
-            analysis_type="global_analysis" ,
+            analysis_type=analysis_type ,
             model=self.model_open_ai ,
             temp=temp ,
-            analysis_file=raw_text ,
+            analysis_file=text ,
             token=tokens_used
 
         )
@@ -161,23 +221,16 @@ class Ai_Analyse():
         print("Generated text:\n" , response.content[0].text)
 
 
-    def basic_groq_analysing(self, groq_model = "llama3-8b-8192", groq_heat = 0.8):
-        print(f"in GROQ alalyse with ai: ID IS:\n {self.record_id}")
+    def basic_groq_analysing(self, groq_model = "llama-3.3-70b-versatile", groq_heat = 0.8):
         db = DatabaseManager() # Initialize the Groq client
-        print(self.content)
-        # client = Groq(api_key= "KEY_GROQ")
         groq_api_key = os.getenv("GROQ_API_KEY")
         groq_client = Groq(api_key=groq_api_key)
 
-        # client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
         # Specify the model to use
-
-
         # "llama-3.3-70b-versatile"
         # Grok-2
-        # "llama3-8b-8192"
-        # "llama-7b-hf"
+        # "llama3-8b-8192" this works
+        # "llama-7b-hf" this not
 
 
         # System's task
@@ -208,9 +261,10 @@ class Ai_Analyse():
         raw_text = response.choices[0].message.content
         tokens_used = response.usage.completion_tokens
         # save in sql
+        analysis_type = inspect.currentframe().f_code.co_name
         db.save_analysis(
             recording_id=self.record_id,
-            analysis_type="relationship_analysis" ,
+            analysis_type=analysis_type ,
             model=groq_model ,
             temp=groq_heat ,
             analysis_file=raw_text ,
