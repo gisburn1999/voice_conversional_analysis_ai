@@ -1,8 +1,20 @@
 # Ignore all files in folder
 
+
+
+# Environment and config
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE files
+.idea/
+.DS_Store
+
+# App data
+helper_files/*
 transcripts/*
 recordings/*
-voice/*
-test_acc_works.py/*
-audio_input_file_test.py/*
-voice_reording_basic.py/*
+transcripts_prefabricated/*
